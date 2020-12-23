@@ -12,20 +12,21 @@ type Engine struct {
 	logger          log.Logger
 	signatures      map[types.Signature]chan types.Event
 	signaturesIndex map[types.SignatureEventSelector][]types.Signature
-	inputs          sources
+	inputs          EventSources
 	output          chan types.Finding
 }
 
-type sources struct {
-	tracee chan types.Event
+//EventSources is a bundle of input sources used to configure the Engine
+type EventSources struct {
+	Tracee chan types.Event
 }
 
 // NewEngine creates a new rules-engine with the given arguments
 // inputs and outputs are given as channels created by the consumer
-func NewEngine(sigs []types.Signature, traceeSource chan types.Event, output chan types.Finding, logWriter io.Writer) Engine {
+func NewEngine(sigs []types.Signature, sources EventSources, output chan types.Finding, logWriter io.Writer) Engine {
 	engine := Engine{}
 	engine.logger = *log.New(logWriter, "", 0)
-	engine.inputs.tracee = traceeSource
+	engine.inputs = sources
 	engine.output = output
 	engine.signatures = make(map[types.Signature]chan types.Event)
 	engine.signaturesIndex = make(map[types.SignatureEventSelector][]types.Signature)
@@ -78,7 +79,7 @@ func (engine Engine) matchHandler(res types.Finding) {
 func (engine Engine) consumeSources(done <-chan bool) {
 	for {
 		select {
-		case event, ok := <-engine.inputs.tracee:
+		case event, ok := <-engine.inputs.Tracee:
 			if !ok {
 				for sig := range engine.signatures {
 					for _, sel := range sig.GetSelectedEvents() {
@@ -88,7 +89,7 @@ func (engine Engine) consumeSources(done <-chan bool) {
 						}
 					}
 				}
-				engine.inputs.tracee = nil
+				engine.inputs.Tracee = nil
 			} else if event != nil {
 				for _, s := range engine.signaturesIndex[types.SignatureEventSelector{Source: "tracee", Name: event.(types.TraceeEvent).EventName}] {
 					engine.signatures[s] <- event

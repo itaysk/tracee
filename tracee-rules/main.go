@@ -8,7 +8,6 @@ import (
 	"syscall"
 
 	"github.com/aquasecurity/tracee/tracee-rules/engine"
-	"github.com/aquasecurity/tracee/tracee-rules/types"
 	"github.com/urfave/cli/v2"
 )
 
@@ -28,21 +27,21 @@ func main() {
 				}
 				return nil
 			}
-			var inputTracee chan types.Event
+			var inputs engine.EventSources
 			if c.IsSet("tracee-file") {
-				inputTracee, err = setupTraceeSource(c.String("tracee-file"))
+				inputs.Tracee, err = setupTraceeSource(c.String("tracee-file"))
 			}
 			if c.IsSet("stdin-as") {
-				inputTracee, err = setupStdinSource(c.String("stdin-as"))
+				inputs.Tracee, err = setupStdinSource(c.String("stdin-as"))
 			}
-			if err != nil || inputTracee == nil {
+			if err != nil || inputs == (engine.EventSources{}) {
 				return err
 			}
 			output, err := setupOuput(c.String("webhook"))
 			if err != nil {
 				return err
 			}
-			e := engine.NewEngine(sigs, inputTracee, output, os.Stderr)
+			e := engine.NewEngine(sigs, inputs, output, os.Stderr)
 			e.Start(sigHandler())
 			return nil
 		},
