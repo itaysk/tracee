@@ -1,12 +1,14 @@
 package engine
 
 import (
+	"io"
 	"log"
 
 	"github.com/aquasecurity/tracee/tracee-rules/types"
 )
 
 type Engine struct {
+	logger          log.Logger
 	signatures      map[types.Signature]chan types.Event
 	signaturesIndex map[types.SignatureEventSelector][]types.Signature
 	inputs          sources
@@ -17,8 +19,9 @@ type sources struct {
 	tracee chan types.Event
 }
 
-func NewEngine(sigs []types.Signature, traceeSource chan types.Event, output chan types.Finding) Engine {
+func NewEngine(sigs []types.Signature, traceeSource chan types.Event, output chan types.Finding, logWriter io.Writer) Engine {
 	engine := Engine{}
+	engine.logger = *log.New(logWriter, "", 0)
 	engine.inputs.tracee = traceeSource
 	engine.output = output
 	engine.signatures = make(map[types.Signature]chan types.Event)
@@ -27,7 +30,7 @@ func NewEngine(sigs []types.Signature, traceeSource chan types.Event, output cha
 		engine.signatures[sig] = make(chan types.Event)
 		for _, es := range sig.GetSelectedEvents() {
 			if es.Source == "" {
-				log.Printf("signature %s doesn't declare a source inputs", sig.GetMetadata().Name)
+				log.Printf("signature %s doesn't declare an input source", sig.GetMetadata().Name)
 			}
 			if es.Name == "" {
 				es.Name = "*"

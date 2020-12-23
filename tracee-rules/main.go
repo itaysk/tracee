@@ -42,7 +42,7 @@ func main() {
 			if err != nil {
 				return err
 			}
-			e := engine.NewEngine(sigs, inputTracee, output)
+			e := engine.NewEngine(sigs, inputTracee, output, os.Stderr)
 			e.Start(sigHandler())
 			return nil
 		},
