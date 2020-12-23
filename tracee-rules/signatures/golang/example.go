@@ -51,7 +51,7 @@ func (sig *counter) OnEvent(e types.Event) error {
 		return fmt.Errorf("invalid event")
 	}
 
-	if ee.ArgsNum > 0 && filepath.Base(ee.Args[0].Value.(string)) == "yo" {
+	if ee.ArgsNum > 0 && ee.Args[0].Name == "pathname" && filepath.Base(ee.Args[0].Value.(string)) == "yo" {
 		sig.count++
 	}
 	if sig.count == sig.target {
