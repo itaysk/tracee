@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -19,6 +20,13 @@ func main() {
 			sigs, err := getSignatures(c.String("rules-dir"), c.StringSlice("rules"))
 			if err != nil {
 				return err
+			}
+			if c.Bool("list") {
+				for _, sig := range sigs {
+					meta := sig.GetMetadata()
+					fmt.Printf("%s: %s\n", meta.Name, meta.Description)
+				}
+				return nil
 			}
 			var inputTracee chan types.Event
 			if c.IsSet("tracee-file") {
@@ -58,6 +66,10 @@ func main() {
 			&cli.StringFlag{
 				Name:  "stdin-as",
 				Usage: "read events from stdin and treat them as JSON serielizer events of the specified input source. this will override an already configured input source",
+			},
+			&cli.BoolFlag{
+				Name:  "list",
+				Usage: "print all available rules",
 			},
 		},
 	}
