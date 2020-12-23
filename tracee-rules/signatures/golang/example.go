@@ -58,7 +58,7 @@ func (sig *counter) OnEvent(e types.Event) error {
 			Context:   e,
 			Signature: sig,
 		})
-		sig.Init(sig.cb)
+		sig.count = 0
 	}
 	return nil
 }
