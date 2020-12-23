@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -11,19 +12,20 @@ import (
 	"github.com/aquasecurity/tracee/tracee-rules/types"
 )
 
-func setupStdinSource() (chan types.Event, error) {
+func setupStdinSource(inputSource string) (chan types.Event, error) {
 	res := make(chan types.Event)
 	scanner := bufio.NewScanner(os.Stdin)
 	go func() {
 		for scanner.Scan() {
-			res <- types.TraceeEvent{
-				ArgsNum: 1,
-				Args: []types.TraceeEventArgument{
-					{
-						Name:  "pathname",
-						Value: scanner.Text(),
-					},
-				},
+			event := scanner.Bytes()
+			switch inputSource {
+			case "tracee":
+				var e types.TraceeEvent
+				err := json.Unmarshal(event, &e)
+				if err != nil {
+					log.Printf("invalid json in %s: %v", string(event), err)
+				}
+				res <- types.Event(e)
 			}
 		}
 		close(res)

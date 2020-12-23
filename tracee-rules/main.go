@@ -23,8 +23,9 @@ func main() {
 			var inputTracee chan types.Event
 			if c.IsSet("tracee-file") {
 				inputTracee, err = setupTraceeSource(c.String("tracee-file"))
-			} else {
-				inputTracee, err = setupStdinSource()
+			}
+			if c.IsSet("stdin-as") {
+				inputTracee, err = setupStdinSource(c.String("stdin-as"))
 			}
 			if err != nil || inputTracee == nil {
 				return err
@@ -53,6 +54,10 @@ func main() {
 			&cli.StringFlag{
 				Name:  "tracee-file",
 				Usage: "path to Tracee Gob output file",
+			},
+			&cli.StringFlag{
+				Name:  "stdin-as",
+				Usage: "read events from stdin and treat them as JSON serielizer events of the specified input source. this will override an already configured input source",
 			},
 		},
 	}
