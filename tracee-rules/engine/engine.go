@@ -67,6 +67,7 @@ func (engine Engine) consumeSources() {
 					for _, sel := range sig.GetSignatureEventSelectors() {
 						if sel.Source == "tracee" {
 							sig.OnSignal(types.SignalSourceComplete("tracee"))
+							break
 						}
 					}
 				}
