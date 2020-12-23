@@ -49,7 +49,6 @@ func setupTraceeSource(traceeFilePath string) (chan types.Event, error) {
 					log.Printf("Error while decoding event: %v", err)
 				}
 			} else {
-				fmt.Println(event)
 				res <- event
 			}
 		}
