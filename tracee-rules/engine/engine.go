@@ -26,6 +26,9 @@ func NewEngine(sigs []types.Signature, traceeSource chan types.Event, output cha
 	for _, sig := range sigs {
 		engine.signatures[sig] = make(chan types.Event)
 		for _, es := range sig.GetSignatureEventSelectors() {
+			if es.Source == "" {
+				log.Printf("signature %s doesn't declare a source inputs", sig.GetMetadata().Name)
+			}
 			if es.Name == "" {
 				es.Name = "*"
 			}
