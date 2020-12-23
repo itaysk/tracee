@@ -7,6 +7,7 @@ import (
 	"github.com/aquasecurity/tracee/tracee-rules/types"
 )
 
+// Engine is a rule-engine that can process events coming from a set of input sources against a set of loaded signatures, and report the signatures' findings
 type Engine struct {
 	logger          log.Logger
 	signatures      map[types.Signature]chan types.Event
@@ -19,6 +20,8 @@ type sources struct {
 	tracee chan types.Event
 }
 
+// NewEngine creates a new rules-engine with the given arguments
+// inputs and outputs are given as channels created by the consumer
 func NewEngine(sigs []types.Signature, traceeSource chan types.Event, output chan types.Finding, logWriter io.Writer) Engine {
 	engine := Engine{}
 	engine.logger = *log.New(logWriter, "", 0)
@@ -45,6 +48,10 @@ func NewEngine(sigs []types.Signature, traceeSource chan types.Event, output cha
 	return engine
 }
 
+// Start starts processing events and detecting signatures
+// it runs continuously until stopped by the done channel
+// once done, it cleans all internal resources, which means the engine is not reusable
+// note that the input and output channels are created by the consumer and therefore are not closed
 func (engine Engine) Start(done chan bool) {
 	go engine.consumeSources(done)
 	for s, c := range engine.signatures {
@@ -61,10 +68,13 @@ func (engine Engine) Start(done chan bool) {
 	<-done
 }
 
+// matchHandler is a function that runs when a signature is matched
 func (engine Engine) matchHandler(res types.Finding) {
 	engine.output <- res
 }
 
+// consumeSources starts consuming the input sources
+// it runs continuously until stopped by the done channel
 func (engine Engine) consumeSources(done <-chan bool) {
 	for {
 		select {
