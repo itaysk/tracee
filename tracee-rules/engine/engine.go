@@ -25,7 +25,7 @@ func NewEngine(sigs []types.Signature, traceeSource chan types.Event, output cha
 	engine.signaturesIndex = make(map[types.SignatureEventSelector][]types.Signature)
 	for _, sig := range sigs {
 		engine.signatures[sig] = make(chan types.Event)
-		for _, es := range sig.GetSignatureEventSelectors() {
+		for _, es := range sig.GetSelectedEvents() {
 			if es.Source == "" {
 				log.Printf("signature %s doesn't declare a source inputs", sig.GetMetadata().Name)
 			}
@@ -67,7 +67,7 @@ func (engine Engine) consumeSources() {
 		case event, ok := <-engine.inputs.tracee:
 			if !ok {
 				for sig := range engine.signatures {
-					for _, sel := range sig.GetSignatureEventSelectors() {
+					for _, sel := range sig.GetSelectedEvents() {
 						if sel.Source == "tracee" {
 							sig.OnSignal(types.SignalSourceComplete("tracee"))
 							break

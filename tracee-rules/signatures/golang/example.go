@@ -31,7 +31,7 @@ func (sig *counter) GetMetadata() types.SignatureMetadata {
 	}
 }
 
-func (sig *counter) GetSignatureEventSelectors() []types.SignatureEventSelector {
+func (sig *counter) GetSelectedEvents() []types.SignatureEventSelector {
 	return []types.SignatureEventSelector{{
 		Source: "tracee",
 		//Name:   "execve",

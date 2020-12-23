@@ -2,7 +2,7 @@ package types
 
 type Signature interface {
 	GetMetadata() SignatureMetadata
-	GetSignatureEventSelectors() []SignatureEventSelector
+	GetSelectedEvents() []SignatureEventSelector
 	Init(cb SignatureHandler) error
 	OnEvent(event Event) error
 	OnSignal(signal Signal) error
