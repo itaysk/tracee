@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
 
 	"github.com/aquasecurity/tracee/tracee-rules/types"
 )
@@ -50,10 +51,14 @@ func setupTraceeSource(traceeFilePath string) (chan types.Event, error) {
 			err := dec.Decode(&event)
 			if err != nil {
 				if err == io.EOF {
-					break
+					// ignore EOF becasue we assume events can keep streaming into the file
+					time.Sleep(time.Millisecond * 500)
+					continue
 				} else {
 					log.Printf("Error while decoding event: %v", err)
 				}
+			} else if event.EventName[0] == 4 { // Tracee EOT signal
+				break
 			} else {
 				res <- event
 			}
