@@ -1,32 +1,58 @@
 #!/bin/sh
 
 TRACEE_EBPF_EXE=${TRACEE_EBPF_EXE:="/tracee/tracee-ebpf"}
-TRACEE_WEBHOOK_CONFIG=${TRACEE_WEBHOOK_CONFIG:="/tmp/tracee/integrations-config.yaml"}
-TRACEE_WEBHOOK_EXE=${TRACEE_WEBHOOK_EXE:="/tracee/falcosidekick"}
 TRACEE_RULES_EXE=${TRACEE_RULES_EXE:="/tracee/tracee-rules"}
 
-if [ "$1" = "trace" ]; then
-	shift
-	$TRACEE_EBPF_EXE $@
-	exit
-fi
+die() {
+	echo $1 >&2
+	exit "$2"
+}
 
-if [ "$1" = "--list" ]; then
-	shift
-	$TRACEE_RULES_EXE --list
-	exit
-fi
+# parse_args parses the arguments passed to the entrypoint
+# it first looks for subcommands, which will be executed immidiately
+# then it parses flags for the default command in format '--flagname flagvalue'
+# parsed flags are accessible under arg_flagname variables
+# positional args are not supported
+parse_args() {
+	while test $# -gt 0; do
+		case "$1" in
+			trace)
+				shift
+				$TRACEE_EBPF_EXE $@
+				exit "$?"
+				;;
+			--list)
+				shift
+				$TRACEE_RULES_EXE --list
+				exit "$?"
+				;;
+			--rules)
+				test $# -lt 2 && die "missing value for argument '$1'." 1
+				arg_rules="$2"
+				shift
+				;;
+			--webhook-url)
+				test $# -lt 2 && die "missing value for argument '$1'." 1
+				arg_webhook_url="$2"
+				shift
+				;;
+			--webhook-content-type)
+				test $# -lt 2 && die "missing value for argument '$1'." 1
+				arg_webhook_content_type="$2"
+				shift
+				;;
+			*)
+				die "unknown option $1" 1
+				;;
+		esac
+		shift
+	done
+}
 
-if [ "$1" = "--rules" ]; then
-	flag_rules="$1=$2"
-fi
+parse_args "$@"
 
-if [ -f $TRACEE_WEBHOOK_CONFIG ]; then
-	flag_webhook_config="--config-file=$TRACEE_WEBHOOK_CONFIG"
-fi
+test -n "$arg_rules" && flag_rules="--rules=$arg_rules"
+test -n "$arg_webhook_url" && flag_webhook_url="--webhook-url=$arg_webhook_url"
+test -n "$arg_webhook_content_type" && flag_webhook_content_type="--webhook-content-type=$arg_webhook_content_type"
 
-if $TRACEE_WEBHOOK_EXE $flag_webhook_config& then
-	flag_webhook_url="--webhook=http://localhost:2801"
-fi
-
-$TRACEE_EBPF_EXE --output=format:gob --security-alerts | $TRACEE_RULES_EXE --input-tracee=file:stdin --input-tracee=format:gob $flag_webhook_url $flag_rules
+$TRACEE_EBPF_EXE --output=format:gob --security-alerts | $TRACEE_RULES_EXE --input-tracee=file:stdin --input-tracee=format:gob $flag_webhook_url $flag_webhook_content_type $flag_rules
